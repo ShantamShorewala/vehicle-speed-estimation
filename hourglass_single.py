@@ -125,8 +125,8 @@ class Hourglass():
 
 		for m in range(0,len(coords)):
 			val = vals[0][m].detach().numpy()
-			#print ("val",val)
-			if val>0.5: #threshold for confidence score
+			print ("val",val)
+			if val>0.4: #threshold for confidence score
 				x,y = coords[m][0].cpu().detach().numpy(), coords[m][1].cpu().detach().numpy()
 				if ([x,y] != present for present in pointers):
 					#print ("coming in here")

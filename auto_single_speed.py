@@ -17,7 +17,7 @@ from auto_track import analytics_rbc
 import hourglass_single#.example.hourglass_single #import hourglass
 
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('auto_speed_estimation.avi',fourcc, 20.0, (900,720))
+out = cv2.VideoWriter('auto_speed_estimation.avi',fourcc, 20.0, (1920,1080))
 
 def flip(pos):
 	if pos[2]<0:
@@ -117,7 +117,7 @@ def draw_boxes(frame,class_boxes, speed, onlyspeed):
 		cv2.putText(frame, "ID:"+str(id_number) , (x2,y2),cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0),2, cv2.LINE_AA)
 		cv2.putText(frame, str(classname.decode("utf-8")), (int(x1), int(y1)), cv2.FONT_HERSHEY_COMPLEX,1.15, (0, 255, 255),2)
 		if (onlyspeed==True):
-			cv2.putText(frame, "Speed:"+str(round(speed, 2))+ "  m/s" , (x2+50,y2), cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0),2, cv2.LINE_AA)
+			cv2.putText(frame, "Speed:"+str(round(speed, 2))+ "m/s" , (x2+50,y2), cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0),2, cv2.LINE_AA)
 		#cv2.putText(frame, "CLASS:"+str(classname) , (x2,y2),cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0), 1, cv2.LINE_AA)
 		#cv2.putText(frame, "Speed:"+ str(speed) +' Km/hr' , (x2+10,y2+10),cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0), 2, cv2.LINE_AA)
 	return frame, cropped
@@ -156,6 +156,8 @@ while True:
 
 	if frame_number==0:
 		ret, frame = cap.read()
+		print (frame.shape)
+		#time.sleep(10)
 		prev_frame = frame.copy()
 
 	else:
