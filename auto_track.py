@@ -233,4 +233,4 @@ class analytics_rbc:
 
 		#return_dict={'up_count':self.v_count_up, 'down_count':self.v_count_down, 'speed':speed_for_vehicle}
 		#return return_dict, ret_struct
-return ret_struct
+		return ret_struct

@@ -230,4 +230,4 @@ class analytics_rbc:
 			temp_dict['speed'] = speed_for_vehicle
 
 		return_dict={'up_count':self.v_count_up, 'down_count':self.v_count_down, 'speed':speed_for_vehicle}
-return ret_struct #return_dict ret_struct
+		return ret_struct #return_dict ret_struct

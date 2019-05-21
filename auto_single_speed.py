@@ -123,13 +123,13 @@ def draw_boxes(frame,class_boxes, speed, onlyspeed):
 	return frame, cropped
 
 
-cap = cv2.VideoCapture('/home/shantam/Documents/Programs/PoseEstimation/autospeed/clip 1/clip_1.avi')
+cap = cv2.VideoCapture('/home/shantam/Documents/Programs/PoseEstimation/autospeed/clip 4/clip_4.avi')
 #cap.set(cv2.CAP_PROP_FPS, 30)
 print("fps rate: ", cv2.CAP_PROP_FPS)
 
 #fourcc = cv2.VideoWriter_fourcc(*'DIVX')
 #out = cv2.VideoWriter('test_out_4.avi', fourcc, 15.0, (int(cap.get(3)), int(cap.get(4))))
-
+	
 
 #yolo = YOLOV3("cfg/yolo_2k_reanchored.cfg","weights/yolo_2k_reanchored_70000.weights","cfg/2k_aug.data")
 
@@ -152,7 +152,7 @@ while True:
 	global tracked, last, tracking
 	found = 0
 
-	t = 7.0/125.0
+	t = 45.0/900.0#25.0/497.0#10.0/191.0#7.0/125.0
 
 	if frame_number==0:
 		ret, frame = cap.read()
@@ -251,7 +251,7 @@ while True:
 
 									if (j['orientation']=='away') and (position[2]>=j['lastpose'][2]):
 
-										if ((abs(position[2]-j['lastpose'][2]))<500) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
+										if ((abs(position[2]-j['lastpose'][2]))<(500+(framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
 										#if ((abs(position[2]-j['lastpose'][2]))<500):
 
 											j['currentpose'] = position
@@ -260,14 +260,20 @@ while True:
 											print ("poses here", j['lastpose'], j['currentpose'])
 
 											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
-											j['speed'] += speed/100.0
-											j['lastpose'] = position
-											extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
-											cv2.imshow("speeded", extra)
-											print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], speed, "going away", j['currentframe'], j['lastframe'])
-											j['lastframe'] = framecount
-											j['latest'] = j['speed']/j['computes']
-											time.sleep(1)
+											if speed < 2000:
+												j['speed'] += speed/100.0
+												j['lastpose'] = position
+												extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
+												cv2.imshow("speeded", extra)
+												print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], speed, "going away", j['currentframe'], j['lastframe'])
+												j['lastframe'] = framecount
+												j['latest'] = j['speed']/j['computes']
+												print ("this one", j['latest'], j['computes'])
+												time.sleep(0.5)
+
+											else:
+												j['detections']-=1
+												j['computes']-=1
 
 										else:
 											j['detections']-=1
@@ -277,21 +283,28 @@ while True:
 
 										#if (abs(position[2]-j['lastpose'][2]))<500:
 										print ("difference in z", abs(position[2]-j['lastpose'][2]))
-										if ((abs(position[2]-j['lastpose'][2]))<500) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
+										if ((abs(position[2]-j['lastpose'][2]))<(500+(framecount-j['lastframe'])*200)) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
 											j['currentpose'] = position
 											j['currentframe'] = framecount
 											j['detections'] = 0
 											print ("poses here", j['lastpose'], j['currentpose'])
 
 											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
-											j['speed'] += speed/100.0
-											j['lastpose'] = position
-											extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
-											cv2.imshow("speeded", extra)
-											print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed, "coming near", j['currentframe'], j['lastframe'])
-											j['lastframe'] = framecount
-											j['latest'] = j['speed']/j['computes']
-											time.sleep(1)
+											#j['speed'] += speed/100.0
+											if speed<2000:
+												j['speed'] += speed/100.0
+												j['lastpose'] = position
+												extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
+												cv2.imshow("speeded", extra)
+												print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed, "coming near", j['currentframe'], j['lastframe'])
+												j['lastframe'] = framecount
+												j['latest'] = j['speed']/j['computes']
+												print ("this one", j['latest'], j['computes'])
+												time.sleep(0.5)
+
+											else:
+												j['detections']-=1
+												j['computes']-=1
 
 										else:
 											j['detections']-=1
@@ -313,7 +326,7 @@ while True:
 										elif front>=3:
 											j['orientation']='towards'
 
-										if ((abs(position[2]-j['lastpose'][2]))<500) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
+										if ((abs(position[2]-j['lastpose'][2]))<(500+(framecount-j['lastframe'])*200)) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
 										#if (abs(position[2]-j['lastpose'][2]))<500:
 											j['currentpose'] = position
 											j['currentframe'] = framecount
@@ -321,15 +334,21 @@ while True:
 											print ("poses here", j['lastpose'], j['currentpose'])
 
 											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
-											j['speed'] += speed/100.0
-											j['lastpose'] = position
-											extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
-											cv2.imshow("speeded", extra)
-											print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed, "unknown orientation", j['currentframe'], j['lastframe'])
-											j['lastframe'] = framecount
-											j['latest'] = j['speed']/j['computes']
-											time.sleep(1)
+											#j['speed'] += speed/100.0
+											if speed<2000:
+												j['speed'] += speed/100.0
+												j['lastpose'] = position
+												extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
+												cv2.imshow("speeded", extra)
+												print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed, "unknown orientation", j['currentframe'], j['lastframe'])
+												j['lastframe'] = framecount
+												j['latest'] = j['speed']/j['computes']
+												print ("this one", j['latest'], j['computes'])
+												time.sleep(0.5)
 
+											else:
+												j['detections']-=1
+												j['computes']-=1
 										else:
 											j['detections']-=1
 											j['computes']-=1
@@ -356,11 +375,11 @@ while True:
 
 		#frame = draw_boxes(frame,class_boxes)
 		#frame = draw_counts(frame,counts)
-		im = cv2.resize(frame,(740,580))
+		#im = cv2.resize(frame,(740,580))
 		if frame_number!=0:
 			cv2.imshow('counts',frame)
 			cv2.waitKey(10)
-			out.write(frame)
+			#out.write(frame)
 		#out.write(frame)
 		#format_save(out_boxes,out_classes,frame)
 		frame_number+=1

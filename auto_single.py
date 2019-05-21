@@ -16,11 +16,17 @@ import numpy as np
 from auto_track import analytics_rbc
 import hourglass_single#.example.hourglass_single #import hourglass
 
+
+def flip(pos):
+	if pos[2]<0:
+		pos*=-1
+	return pos
+
 def distance(last_pos, current_pos):
-	if last_pos[2]<0:
-		last_pos*=-1
-	if current_pos[2]<0:
-		current_pos*=-1
+	# if last_pos[2]<0:
+	# 	last_pos*=-1
+	# if current_pos[2]<0:
+	# 	current_pos*=-1
 
 	val=0
 	for i in range(0,3):
@@ -29,12 +35,13 @@ def distance(last_pos, current_pos):
 	val=math.pow(val,0.5)
 	return val
 
-
 def compute_pose(points, imagepoints):
 	#pts={0: [49.0, 56.0, 116.5], 1: [-57.0, 57.8, 145.5], 2: [0.0, 0.0, 38.0], 3: [51.0, 240.0, 149.5], 4: [-33.0, 36.0, 83.5], 5: [45.0, 256.5, 71.0], 6: [66.4, 220.0, 19.8], 7: [47.5, 43.6, 104.7], 8: [-54.3, 135.0, 149.8], 9: [-43.0, 68.0, 165.6], 10: [-44.2, 61.5, 152.2], 11: [0.0, 260.0, 41.5], 12: [-47.5, 43.6, 104.7], 13: [-45.0, 256.5, 71.0], 14: [56.0, 186.7, 89.0], 15: [43.0, 68.0, 165.6], 16: [33.0, 36.0, 83.5], 17: [-66.4, 220.0, 19.8], 18: [57.0, 57.8, 145.5], 19: [54.3, 135.0, 149.8], 20: [44.2, 61.5, 152.4], 21: [-49.0, 56.0, 116.5], 22: [-51.0, 240.0, 149.5], 23: [-56.0, 186.7, 89.0], 24: [45.0, 125.0, 117.5]}
 
 	pts={0: [45.0, 256.5, 71.0], 1: [-45.0, 256.5, 71.0], 2: [56.0, 186.7, 89.0], 3: [-56.0, 186.7, 89.0], 4: [51.0, 240.0, 149.5], 5: [-51.0, 240.0, 149.5], 6: [0.0, 260.0, 41.5], 7: [-47.5, 43.6, 104.7], 8: [-57.0, 57.8, 145.5], 9: [-54.3, 135.0, 149.8], 10: [-66.4, 220.0, 19.8], 11: [-43.0, 68.0, 165.6], 12: [57.0, 57.8, 145.5], 13: [54.3, 135.0, 149.8], 14: [43.0, 68.0, 165.6], 15: [47.5, 43.6, 104.7], 16: [66.4, 220.0, 19.8], 17: [44.2, 61.5, 152.4], 18: [-44.2, 61.5, 152.2], 19: [49.0, 56.0, 116.5], 20: [-49.0, 56.0, 116.5], 21: [0.0, 0.0, 38.0], 22: [33.0, 36.0, 83.5], 23: [-33.0, 36.0, 83.5]}
-
+	'''order of pts: rear light (left), rear light (right), greenlow corner left, greenlow corner right, top corner rear left, top corner rear right, rear center, indicator light right, 
+	right mirror, right center pole top, right wheel, top corner front right, left mirror, left center pole top, top corner front left , indicator light left, left wheel, Wind shield(top left)
+	Wind shield(top right), Wind shield(bottom left), Wind shield(bottom right), front bonet, head light left, Head light right'''
 
 	mtx = np.array([[1324.110551, 0.000000, 993.993108], [0.000000, 1324.110210, 621.997610],[  0. ,   0. ,   1. ]])
 	dist = np.array([[-0.401747, 0.148985, -0.008159, -0.006626, 0.000000]]) 
@@ -53,8 +60,9 @@ def compute_pose(points, imagepoints):
 
 	#print ("passing", twist, worldpoints)
 	_, rvecs, tvecs = cv2.solvePnP(worldpoints, twist, mtx, dist)
+	fin_pose = flip(tvecs)
 	
-	return tvecs
+	return fin_pose
 
 def format_save(out_boxes,out_classes,frame):
 	for i in range(len(out_boxes)):
@@ -83,7 +91,7 @@ def draw_counts(frame,counts):
 
 	return frame
 
-def draw_boxes(frame,class_boxes):
+def draw_boxes(frame,class_boxes, speed, onlyspeed):
 
 	for item in class_boxes:
 		classname = item['classname']
@@ -106,12 +114,14 @@ def draw_boxes(frame,class_boxes):
 		cv2.rectangle(frame, (x1,y1),(x2,y2),(255, 255, 0),3)
 		cv2.putText(frame, "ID:"+str(id_number) , (x2,y2),cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0),2, cv2.LINE_AA)
 		cv2.putText(frame, str(classname.decode("utf-8")), (int(x1), int(y1)), cv2.FONT_HERSHEY_COMPLEX,1.15, (0, 255, 255),2)
+		if (onlyspeed==True):
+			cv2.putText(frame, "Speed:"+str(round(speed, 2))+ "  m/s" , (x2+50,y2), cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0),2, cv2.LINE_AA)
 		#cv2.putText(frame, "CLASS:"+str(classname) , (x2,y2),cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0), 1, cv2.LINE_AA)
 		#cv2.putText(frame, "Speed:"+ str(speed) +' Km/hr' , (x2+10,y2+10),cv2.FONT_HERSHEY_SIMPLEX,  0.8, (0, 0 , 0), 2, cv2.LINE_AA)
 	return frame, cropped
 
 
-cap = cv2.VideoCapture('/home/shantam/Documents/Programs/PoseEstimation/autospeed/clip 3/clip_3.avi')
+cap = cv2.VideoCapture('/home/shantam/Documents/Programs/PoseEstimation/autospeed/clip 1/clip_1.avi')
 #cap.set(cv2.CAP_PROP_FPS, 30)
 print("fps rate: ", cv2.CAP_PROP_FPS)
 
@@ -122,13 +132,6 @@ print("fps rate: ", cv2.CAP_PROP_FPS)
 #yolo = YOLOV3("cfg/yolo_2k_reanchored.cfg","weights/yolo_2k_reanchored_70000.weights","cfg/2k_aug.data")
 
 count_line = [(650,400),(1000,500)]
-
-#sline_1_203 = [(1065,514),(1038,704)]
-
-
-#sline_1_203 = [(1065,514),(697,406)]
-#sline_2_203 = [(1038,704),(412,506)]
-
 sline_1_203 = [(1065,514),(524,366)]
 sline_2_203 = [(1038,704),(151,406)]
 
@@ -140,11 +143,14 @@ tracked = []
 last = []
 tracking = []
 
-frame_number = 0
+framecount = 0 
+frame_number=0
 
 while True:
 	global tracked, last, tracking
 	found = 0
+
+	t = 7.0/125.0
 
 	if frame_number==0:
 		ret, frame = cap.read()
@@ -162,13 +168,15 @@ while True:
 		#cv2.imwrite('temp/image.jpg',frame)
 		#out_scores, out_boxes, out_classes = yolo.detect_image(frame)
 		class_boxes = a.run_analytics(frame,300)
+		framecount+=1
 
 		for i in class_boxes:
+			print ("ndjekbdje3", i['id'])
 			if not(any(i['id'] == x  for x in tracked)):
-				frame, cropped = draw_boxes(frame, [i])
+				frame, cropped = draw_boxes(frame, [i], 0, False)
 				#cropped = cv2.imread('/home/shantam/Documents/Programs/hourglasstensorlfow/images/cropped0.jpg')
 				ht, wd = cropped.shape[0], cropped.shape[1]
-				if ht>100 and wd>100:
+				if (ht>100 and wd>100) or (ht>150) or (wd>150):
 					cropped = np.array(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB))
 					#cropped = cv2.resize(cropped, (256,256))
 					cropped_new = np.moveaxis(cropped, 2, 0)
@@ -184,47 +192,148 @@ while True:
 					if len(points)>=4:
 						tracked.append(i['id'])
 						position = compute_pose(pointers, points)
-						tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes':0})
+						
+						back=0
+						front=0
+						for idx in pointers:
+							if (idx == 0) or (idx == 1) or (idx == 6):
+								back+=1
+							elif (idx==17) or (idx==18) or (idx==19) or (idx==20) or (idx==21):
+								front+=1
+
+						if back>=2:
+							tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'away', 'lastframe':framecount, 'currentframe': framecount, 'latest':0})
+							print ("orientation", "away", back, front, position)
+						elif front>=3:
+							tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'towards', 'lastframe':framecount, 'currentframe': framecount, 'latest':0})
+							print ("orientation", "towards", back, front, position)
+						else:
+							tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'unknown', 'lastframe':framecount, 'currentframe': framecount, 'latest':0})
+							print ("orientation", "unknown", back, front, position)	
+
 						cv2.imshow("initial", cropped)
 						cv2.waitKey(10)
 						
 			elif (i['id'] == x for x in tracked):
-				frame, cropped = draw_boxes(frame, [i])
+				frame, cropped = draw_boxes(frame, [i], 0, False)
 				ht, wd = cropped.shape[0], cropped.shape[1]
 
 				for j in tracking:
+
 					if j['track_id']==i['id']:
+						frame, cray = draw_boxes(frame, [i], j['latest'], True)
 						j['detections']+=1
 
-						if j['detections']==5:
-							if ht>100 and wd>100:
+						if j['detections']==2:
+							print ("5 hoagye", j["detections"], framecount)
+							if (ht>100 and wd>100) or (ht>150) or (wd>150):
 								j['computes']+=1
 								cropped = np.array(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB))
 								cropped_new = np.moveaxis(cropped, 2, 0)
 								pointers, points = model.forward_pass(cropped_new)
-								#print("points found", pointers, points)
+								print ("length", len(points))
 
 								for point in points:
 									print (point)
 									x,y = point[0], point[1]
 									cv2.circle(cropped, (x,y), 5, (0,0,255), -1)
-									#print (x,y)
-
 								cv2.imshow("initial", cropped)
 								cv2.waitKey(10)
 
 								if len(points)>=4:								
 									position = compute_pose(pointers, points)
-									j['currentpose'] = position
-									j['detections'] = 0
-									print ("poses here", j['lastpose'], j['currentpose'])
+									print ("POSITIONSSSS", position)
+									#time.sleep(2)
 
-									speed = distance(j['lastpose'], j['currentpose'])
-									j['speed'] += speed/100.0
-									j['lastpose'] = position
-									print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed)
-									time.sleep(5)
+									if (j['orientation']=='away') and (position[2]>=j['lastpose'][2]):
 
+										if ((abs(position[2]-j['lastpose'][2]))<500) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
+										#if ((abs(position[2]-j['lastpose'][2]))<500):
+
+											j['currentpose'] = position
+											j['currentframe'] = framecount
+											j['detections'] = 0
+											print ("poses here", j['lastpose'], j['currentpose'])
+
+											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
+											j['speed'] += speed/100.0
+											j['lastpose'] = position
+											extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
+											cv2.imshow("speeded", extra)
+											print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], speed, "going away", j['currentframe'], j['lastframe'])
+											j['lastframe'] = framecount
+											j['latest'] = j['speed']/j['computes']
+											time.sleep(1)
+
+										else:
+											j['detections']-=1
+											j['computes']-=1
+
+									elif (j['orientation']=='towards') and (position[2]<=j['lastpose'][2]):
+
+										#if (abs(position[2]-j['lastpose'][2]))<500:
+										print ("difference in z", abs(position[2]-j['lastpose'][2]))
+										if ((abs(position[2]-j['lastpose'][2]))<500) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
+											j['currentpose'] = position
+											j['currentframe'] = framecount
+											j['detections'] = 0
+											print ("poses here", j['lastpose'], j['currentpose'])
+
+											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
+											j['speed'] += speed/100.0
+											j['lastpose'] = position
+											extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
+											cv2.imshow("speeded", extra)
+											print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed, "coming near", j['currentframe'], j['lastframe'])
+											j['lastframe'] = framecount
+											j['latest'] = j['speed']/j['computes']
+											time.sleep(1)
+
+										else:
+											j['detections']-=1
+											j['computes']-=1
+
+
+									elif (j['orientation']=='unknown'):
+
+										back=0
+										front=0
+										for idx in pointers:
+											if (idx == 0) or (idx == 1) or (idx == 6):
+												back+=1
+											elif (idx==17) or (idx==18) or (idx==19) or (idx==20) or (idx==21):
+												front+=1
+										
+										if back>=2:
+											j['orientation']='away'
+										elif front>=3:
+											j['orientation']='towards'
+
+										if ((abs(position[2]-j['lastpose'][2]))<500) and ((abs(position[2]-j['lastpose'][2]))>(framecount-j['lastframe'])*20):
+										#if (abs(position[2]-j['lastpose'][2]))<500:
+											j['currentpose'] = position
+											j['currentframe'] = framecount
+											j['detections'] = 0
+											print ("poses here", j['lastpose'], j['currentpose'])
+
+											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
+											j['speed'] += speed/100.0
+											j['lastpose'] = position
+											extra, unnecessary = draw_boxes(frame, [i], j['speed']/j['computes'], True)
+											cv2.imshow("speeded", extra)
+											print ("\n", 'speed', j['speed']/j['computes'],  j['track_id'], len(points), speed, "unknown orientation", j['currentframe'], j['lastframe'])
+											j['lastframe'] = framecount
+											j['latest'] = j['speed']/j['computes']
+											time.sleep(1)
+
+										else:
+											j['detections']-=1
+											j['computes']-=1
+
+									else:
+										j['detections']-=1
+										j['computes']-=1
+									
 								else:
 									j['detections']-=1
 									j['computes']-=1
