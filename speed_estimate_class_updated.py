@@ -133,16 +133,16 @@ class speed_estimation:
 			
 		return frame, cropped
 
-	def init_trackers(self, back, front, position):
+	def init_trackers(self, back, front, position, detection):
 
 		if back>=2:
-			self.tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'away', 'lastframe':self.framecount, 'currentframe': self.framecount, 'latest':0})
+			self.tracking.append({'track_id': detection['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'away', 'lastframe':self.framecount, 'currentframe': self.framecount, 'latest':0})
 			#print ("orientation", "away", back, front, position)
 		elif front>=3:
-			self.tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'towards', 'lastframe':self.framecount, 'currentframe': self.framecount, 'latest':0})
+			self.tracking.append({'track_id': detection['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'towards', 'lastframe':self.framecount, 'currentframe': self.framecount, 'latest':0})
 			#print ("orientation", "towards", back, front, position)
 		else:
-			self.tracking.append({'track_id': i['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'unknown', 'lastframe':self.framecount, 'currentframe': self.framecount, 'latest':0})
+			self.tracking.append({'track_id': detection['id'], 'detections':0, 'lastpose': position, 'speed':0, 'currentpose': position, 'computes': 0, 'orientation': 'unknown', 'lastframe':self.framecount, 'currentframe': self.framecount, 'latest':0})
 			#print ("orientation", "unknown", back, front, position)
 	
 	def init_frame(self, frame):
@@ -200,6 +200,8 @@ class speed_estimation:
 		print ("\n", 'speed', tracked_vehicle['speed']/tracked_vehicle['computes'], tracked_vehicle['track_id'], speed, orientation, tracked_vehicle['currentframe'], tracked_vehicle['lastframe'])
 		tracked_vehicle['lastframe'] = self.framecount
 		tracked_vehicle['latest'] = tracked_vehicle['speed']/tracked_vehicle['computes']
+
+		return tracked_vehicle
 		
 	def speed_estimate(self, frame, class_boxes):
 		
@@ -218,15 +220,15 @@ class speed_estimation:
 				if (ht>100 and wd>100) or (ht>150) or (wd>150):
 					
 					pointers, points = self.get_keypoints(cropped)
-					frame, transformed_points = self.transform_points(points, i)
+					frame, transformed_points = self.transform_points(points, i, frame)
 				
 					if len(points)>=4:
-						tracked.append(i['id'])
+						self.tracked.append(i['id'])
 						position = self.compute_pose(pointers, transformed_points)
 						back, front = self.check_orientation(pointers)
-						self.init_trackers(back, front, position)
+						self.init_trackers(back, front, position, i)
 
-			elif (i['id'] == x for x in tracked):
+			elif (i['id'] == x for x in self.tracked):
 				
 				frame, cropped = self.draw_boxes(frame, [i], 0, False)
 				ht, wd = cropped.shape[0], cropped.shape[1]
@@ -245,7 +247,7 @@ class speed_estimation:
 								
 								j['computes']+=1
 								pointers, points = self.get_keypoints(cropped)
-								frame, transformed_points = self.transform_points(points, i)
+								frame, transformed_points = self.transform_points(points, i, frame)
 								#needed only to verify the number of keypoints detected
 								#print ("length", len(points))
 
@@ -257,7 +259,7 @@ class speed_estimation:
 										if ((abs(position[2]-j['lastpose'][2]))<(750+(self.framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>50): #(framecount-j['lastframe'])*20):
 
 											j = update_tracked_frame(j, position)
-											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
+											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
 											if speed < 2000:
 												j = update_speed(j, speed, position, frame, [i], "moving away", speed)
 											else:
@@ -271,7 +273,7 @@ class speed_estimation:
 										if ((abs(position[2]-j['lastpose'][2]))<(750+(self.framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>50): #(framecount-j['lastframe'])*20):
 											
 											j = update_tracked_frame(j, position)
-											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
+											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
 											if speed<2000:
 												j = update_speed(j, speed, position, frame, [i], "moving closer", speed)												
 											else:
@@ -291,7 +293,7 @@ class speed_estimation:
 										if ((abs(position[2]-j['lastpose'][2]))<(750+(self.framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>50): #(framecount-j['lastframe'])*20):
 						
 											j = update_tracked_frame(j, position)
-											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*t)
+											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
 
 											if speed<2000:
 												j = update_speed(j, speed, position, frame, [i], "orientation unknown", speed)
