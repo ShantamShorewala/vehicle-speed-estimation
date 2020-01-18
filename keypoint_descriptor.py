@@ -1,4 +1,4 @@
-import time, os, cv2, json
+import time, os, cv2, json, csv
 
 file = open("./annotations/auto_dataset_1010.txt")
 file2 = open("./annotations/auto_dataset_546.txt")
@@ -19,6 +19,9 @@ array_test = []
 
 keypoints = []
 count=0
+
+csv_file = open('descriptors.txt', mode = 'w')
+csv_writer = csv.writer(csv_file, delimiter=' ', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
 for a in file:
 	count+=1
@@ -70,7 +73,7 @@ for a in file2:
 
 	joints=[]
 	#keypoints=[]
-	for i in range(5, 53, 2):
+for i in range(5, 53, 2):
 		x = [float(b[i]), float(b[i+1]), 1.00]
 		#print (i-3 / 2)
 		if x[0]==-1.0:
@@ -114,7 +117,8 @@ for i in range(1,25):
 		kp,des = sift.compute(img,keypoints_dict[i][j])
 		#print des.shape
 		descriptors_dict[i].append(des)
-	
+	csv_writer.writerow([i, descriptors_dict[i]])
+	print i
 print len(descriptors_dict[1])
 
 # count=0
