@@ -17,7 +17,7 @@ class speed_estimation:
 
 	def __init__(self, img_height, img_width):
 
-		self.time = 1/20 #set to time duration between two consecutive frames
+		self.time = 1.0/20.0 #set to time duration between two consecutive frames
 		self.tracked = []
 		self.last = []
 		self.tracking = []
@@ -258,10 +258,10 @@ class speed_estimation:
 
 										if ((abs(position[2]-j['lastpose'][2]))<(750+(self.framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>50): #(framecount-j['lastframe'])*20):
 
-											j = update_tracked_frame(j, position)
-											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
+											j = self.update_tracked_frame(j, position)
+											speed = self.distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
 											if speed < 2000:
-												j = update_speed(j, speed, position, frame, [i], "moving away", speed)
+												j = self.update_speed(j, position, "moving away", speed)
 											else:
 												j = self.decrement(j)
 
@@ -272,10 +272,11 @@ class speed_estimation:
 	
 										if ((abs(position[2]-j['lastpose'][2]))<(750+(self.framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>50): #(framecount-j['lastframe'])*20):
 											
-											j = update_tracked_frame(j, position)
-											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
+											j = self.update_tracked_frame(j, position)
+											speed = self.distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
 											if speed<2000:
-												j = update_speed(j, speed, position, frame, [i], "moving closer", speed)												
+												#j = self.update_speed(j, speed, position, frame, [i], "moving closer", speed)												
+												j = self.update_speed(j, position, "moving away", speed)
 											else:
 												j = self.decrement(j)
 										else:
@@ -292,11 +293,12 @@ class speed_estimation:
 
 										if ((abs(position[2]-j['lastpose'][2]))<(750+(self.framecount-j['lastframe'])*20)) and ((abs(position[2]-j['lastpose'][2]))>50): #(framecount-j['lastframe'])*20):
 						
-											j = update_tracked_frame(j, position)
-											speed = distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
+											j = self.update_tracked_frame(j, position)
+											speed = self.distance(j['lastpose'], j['currentpose'])/(float(j['currentframe']-j['lastframe'])*self.time)
 
 											if speed<2000:
-												j = update_speed(j, speed, position, frame, [i], "orientation unknown", speed)
+												j = self.update_speed(j, position, "moving away", speed)
+												#j = self.update_speed(j, speed, position, frame, [i], "orientation unknown", speed)
 											else:
 												j = self.decrement(j)
 										else:
@@ -312,7 +314,7 @@ class speed_estimation:
 			if not(any(x == m['id'] for m in class_boxes)):
 				self.tracked.remove(x)
 
-		print ("tracked IDs", tracked)
-		frame_number+=1
+		print ("tracked IDs", self.tracked)
+		self.frame_number+=1
 		#contains speed estimates as well - you can also return the frames on which the speed values are written
-		return tracking
+		return self.tracking
